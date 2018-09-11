@@ -1,4 +1,4 @@
-# verilog_WAV-WM8731-
+# verilog音频解码
 verilog_WAV音频解码(WM8731芯片)
 
 读取SD卡内WAV音频文件并通过WM8731进行解码
