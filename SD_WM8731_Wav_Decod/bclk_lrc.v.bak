@@ -1,0 +1,55 @@
+module pll(clk50, rst_n, clkout1,clkout2,cnt1,cnt2); 
+ input clk50; 
+ input rst_n; 
+ output clkout1; 
+ output clkout2;
+ output cnt1;
+ output cnt2; 
+ reg clkout1; 
+ reg clkout2;
+ reg [15:0] cnt1;
+ reg [15:0] cnt2;
+ 
+ 
+ always @(posedge clk50 or negedge rst_n) 
+ begin 
+	if (!rst_n) begin 
+		clkout1 <=1'b0;
+		cnt1<=0; 
+	end 
+	else begin
+		if(cnt1 == 16'd567) begin 
+			clkout1 <= 1'b1; 
+			cnt1 <= cnt1 + 16'd1; 
+		end 
+		else if(cnt1 == 16'd1133) begin 
+		clkout1 <= 1'b0; 
+		cnt1 <= 16'd0; 
+		end 
+		else begin 
+		cnt1 <= cnt1 + 16'd1; 
+		end 
+	end
+end 
+
+ always @(posedge clk50 or negedge rst_n) 
+ begin 
+	if (!rst_n) begin 
+		clkout2 <=1'b0;
+		cnt2<=0; 
+	end 
+	else begin
+		if(cnt2 == 16'd9) begin 
+			clkout2 <= 1'b1; 
+			cnt2 <= cnt2 + 16'd1; 
+		end 
+		else if(cnt2 == 16'd17) begin 
+		clkout2 <= 1'b0; 
+		cnt2 <= 16'd0; 
+		end 
+		else begin 
+		cnt2 <= cnt2 + 16'd1; 
+		end 
+	end
+end 
+endmodule

@@ -1,0 +1,29 @@
+`timescale 1 ns/ 1 ps
+module reg_config_vlg_tst();
+
+reg clock_50m;
+reg reset_n;
+                                               
+wire i2c_sclk;
+wire i2c_sdat$inout;
+
+reg_config i1 (  
+	.clock_50m(clock_50m),
+	.i2c_sclk(i2c_sclk),
+	.i2c_sdat(i2c_sdat),
+	.reset_n(reset_n)
+);
+initial                                                
+begin 
+clock_50m=0;
+forever #10 clock_50m=~clock_50m; 
+end
+
+initial
+begin 
+reset_n=0;
+#100000 reset_n=1; 
+end 
+                                               
+endmodule
+

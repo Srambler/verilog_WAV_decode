@@ -1,0 +1,14 @@
+Analysis & Synthesis Status : Successful - Tue Jul 24 15:52:28 2018
+Quartus II 64-Bit Version : 13.0.1 Build 232 06/12/2013 SP 1 SJ Full Version
+Revision Name : musicplayer_1
+Top-level Entity Name : sd_audio
+Family : Cyclone II
+Total logic elements : 2,449
+    Total combinational functions : 1,534
+    Dedicated logic registers : 1,846
+Total registers : 1846
+Total pins : 13
+Total virtual pins : 0
+Total memory bits : 417,792
+Embedded Multiplier 9-bit elements : 0
+Total PLLs : 0

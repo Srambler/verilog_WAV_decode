@@ -1,0 +1,441 @@
+module i2c(clk,rst,rd,wr,w_data,w_addr,sda,scl,ack);
+parameter size_addr=8;
+parameter size_data=8;
+//主状态机的各个状态
+parameter idle=4'd0,wr_ready=4'd1,wr_ctrl=4'd2,
+          wr_addr=4'd3,wr_data=4'd4,rd_ctrl=4'd5,
+		  rd_data=4'd6,stop=4'd7,ackn=4'd8;
+//启动状态机的各个状态
+parameter head_begin=2'b00,head_bit=2'b01,head_end=2'b10;
+//停止状态及的各个状态
+parameter stop_begin=2'b00,stop_bit=2'b01,stop_end=2'b10;
+//并串转换状态机的各个状态
+parameter sh8out_begin=4'd0,bit6=4'd1,bit5=4'd2,bit4=4'd3,
+          bit3=4'd4,bit2=4'd5,bit1=4'd6,bit0=4'd7,sh8out_end=4'd8;
+//串并转换状态机的各个状态
+parameter sh8in_begin=4'd0,bit70=4'd1,bit60=4'd2,bit50=4'd3,
+          bit40=4'd4,bit30=4'd5,bit20=4'd6,bit10=4'd7,bit00=4'd8,
+		  sh8in_end=4'd9;
+input clk,rst;
+input rd,wr;
+ 
+input [size_addr-1:0] w_addr;
+input [size_data-1:0] w_data;
+ 
+inout sda;
+output scl;
+output ack;
+reg ack;
+reg scl;
+ 
+reg link_sda;//开关信号
+reg link_write;
+reg link_read;
+reg link_start;
+reg link_stop;
+ 
+reg start_buf;
+reg stop_buf;
+reg [size_data-1:0]sh8out_buf;
+reg [size_data-1:0]sh8in_buf;
+wire [size_data-1:0]r_data;//读出的数据
+reg FF;//任务完成标志
+ 
+reg [3:0] mstate;//主状态机寄存器
+reg [1:0] start_state;//启动状态寄存器
+reg [1:0] stop_state;//结束状态寄存器
+reg [3:0] sh8out_state;//并串转换状态寄存器
+reg [3:0] sh8in_state;//串并转换状态寄存器
+ 
+wire sda1,sda2,sda3,sda4;
+assign sda1=(link_start==1)?1'b1:1'b0;
+assign sda2=(link_stop==1) ?1'b1:1'b0;
+assign sda3=(link_write==1)?sh8out_buf[7]:1'b0;
+assign sda4=sda1|sda2|sda3;
+assign sda=(link_sda==1)?sda4:1'bz;
+assign r_data=(link_read==1)?sh8in_buf:8'hzz;
+ 
+always@(posedge clk)//scl时钟产生逻辑
+begin
+if(!rst) scl&lt;=0;
+else scl&lt;=~scl;
+end
+ 
+always@(posedge clk)
+begin
+ if(!rst)
+ begin
+   mstate&lt;=idle;
+   link_read&lt;=0;
+   link_write&lt;=0;
+   link_sda&lt;=0;
+   link_start&lt;=0;
+   ack&lt;=0;
+   link_stop&lt;=0;
+   FF&lt;=0;
+ end
+ else 
+ begin
+  case(mstate)
+  idle: 
+       begin
+	   mstate&lt;=wr_ready;
+	   start_state&lt;=head_begin;
+	   link_write&lt;=0;
+	   link_start&lt;=1;
+	   start_buf&lt;=1;
+	   ack&lt;=0;
+	   FF&lt;=0;
+	   end
+  wr_ready:
+       begin
+	   if(FF==0) headstate;
+	   else
+	   begin
+	    mstate&lt;=wr_ctrl;
+		FF&lt;=0;
+		sh8out_state&lt;=sh8out_begin;
+		sh8out_buf&lt;=8'b1100_1011;
+	   end
+	   end
+  wr_ctrl:
+       begin
+	   if(FF==0)sh8out;
+	   else
+	   begin
+	   mstate&lt;=wr_addr;
+	   FF&lt;=0;
+	   sh8out_state&lt;=sh8out_begin;
+	   sh8out_buf&lt;=w_addr;
+	   end
+	   end
+  wr_addr:
+       begin
+	   if (FF==0)sh8out;
+	   else
+	   begin
+	   FF&lt;=0;
+	   if(rd)
+	    begin
+		link_read&lt;=1;
+		mstate&lt;=rd_ctrl;
+		sh8out_buf&lt;=8'b1001010;
+		sh8out_state&lt;=sh8out_begin;
+		end
+	   if(wr)
+	    begin
+		mstate&lt;=wr_data;
+		sh8out_buf&lt;=w_data;
+		sh8out_state&lt;=sh8out_begin;
+		link_write&lt;=1;
+		end
+	   end
+	   end
+   wr_data:
+        begin
+		if(FF==0)sh8out;
+		else
+		begin
+		mstate&lt;=stop;
+		stop_state&lt;=stop_begin;
+		link_stop&lt;=1;
+		stop_buf&lt;=0;
+		FF&lt;=0;
+		end
+		end
+   rd_ctrl:
+        begin
+		if(FF==0)sh8out;
+		else
+		begin
+		FF&lt;=0;
+		mstate&lt;=rd_data;
+		sh8in_state&lt;=sh8in_begin;
+		end
+		end
+   rd_data:
+        begin
+		if(FF==0)sh8in;
+		else 
+		begin
+		FF&lt;=0;
+		mstate&lt;=stop;
+		stop_buf&lt;=0;
+		link_stop&lt;=1;
+		stop_state&lt;=stop_begin;
+		end
+		end
+	
+   stop:
+        begin
+		if(FF==0)stopstate;
+		else
+		begin
+		 ack&lt;=1;
+		 mstate&lt;=ack;
+		 FF&lt;=0;
+		end
+		end
+   ackn:
+        begin
+		 mstate&lt;=idle;
+		 ack&lt;=0;
+		end
+	default:mstate&lt;=idle;
+  endcase
+ end
+end
+ 
+task headstate;
+begin
+case(start_state)
+ head_begin:
+       begin
+	   if(!scl)
+	   begin
+	   link_sda&lt;=1;
+	   start_state&lt;=head_bit;
+	   end
+	   else 
+	   begin
+	   start_state&lt;=head_begin;
+	   end
+		 
+	   end
+ head_bit:
+       begin
+	   if(scl)
+	    begin
+		start_buf&lt;=0;
+		start_state&lt;=head_end;
+		end
+	   else start_state&lt;=head_bit;
+	   end
+ head_end:
+       if(!scl)
+       begin
+	   link_sda&lt;=0;
+	   link_start&lt;=0;
+	   FF&lt;=1;
+	   start_state&lt;=head_begin;
+	   end
+	   else start_state&lt;=head_end;
+endcase
+end
+endtask
+ 
+task stopstate;
+begin
+ case(stop_state)
+ stop_begin:
+         if(!scl)
+         begin
+		  link_sda&lt;=1;
+		  stop_state&lt;=stop_bit;
+		 end
+		 else stop_state&lt;=stop_begin;
+ stop_bit:
+        begin
+		 if(scl)
+		 begin
+		  stop_state&lt;=stop_end;
+		  stop_buf&lt;=1;
+		 end
+		 else stop_state&lt;=stop_bit;
+		end
+ stop_end:
+      if(!scl)
+      begin
+	   link_sda&lt;=0;
+	   link_stop&lt;=0;
+	   FF&lt;=1;
+	   stop_state&lt;=stop_begin;
+	  end
+	  else stop_state&lt;=stop_end;
+ endcase
+end
+endtask
+ 
+task sh8out;
+begin
+ case(sh8out_state)
+ sh8out_begin:
+      begin
+	  link_sda&lt;=1;
+	  link_write&lt;=1;
+	  sh8out_state&lt;=bit6;
+	  end
+ bit6:
+      begin
+	  if(!scl)
+	  begin
+	  sh8out_buf&lt;=sh8out_buf&lt;&lt;1;
+	  sh8out_state&lt;=bit5;
+	  end
+	  else sh8out_state&lt;=bit6;
+	  end
+ bit5:
+      begin
+	  if(!scl)
+	  begin
+	  sh8out_buf&lt;=sh8out_buf&lt;&lt;1;
+	  sh8out_state&lt;=bit4;
+	  end
+	  else sh8out_state&lt;=bit5;
+	  end
+ bit4:
+      begin
+	  if(!scl)
+	  begin
+	  sh8out_buf&lt;=sh8out_buf&lt;&lt;1;
+	  sh8out_state&lt;=bit3;
+	  end
+	  else sh8out_state&lt;=bit4;
+	  end
+ bit3:
+      begin
+	  if(!scl)
+	  begin
+	  sh8out_buf&lt;=sh8out_buf&lt;&lt;1;
+	  sh8out_state&lt;=bit2;
+	  end
+	  else sh8out_state&lt;=bit3;
+	  end
+ bit2:
+      begin
+	  if(!scl)
+	  begin
+	  sh8out_buf&lt;=sh8out_buf&lt;&lt;1;
+	  sh8out_state&lt;=bit1;
+	  end
+	  else sh8out_state&lt;=bit2;
+	  end
+ bit1:
+      begin
+	  if(!scl)
+	  begin
+	  sh8out_buf&lt;=sh8out_buf&lt;&lt;1;
+	  sh8out_state&lt;=bit0;
+	  end
+	  else sh8out_state&lt;=bit1;
+	  end
+ bit0:
+      begin
+	  if(!scl)
+	  begin
+	  sh8out_buf&lt;=sh8out_buf&lt;&lt;1;
+	  sh8out_state&lt;=sh8out_end;
+	  end
+	  else sh8out_state&lt;=bit0;
+	  end
+ sh8out_end:
+      begin
+	  sh8out_state&lt;=sh8out_begin;
+	  FF&lt;=1;
+	  link_sda&lt;=0;
+	  link_write&lt;=0;
+	  end
+ endcase
+end
+endtask
+ 
+ 
+task sh8in;
+begin
+case (sh8in_state)
+sh8in_begin:
+     begin
+	 link_sda&lt;=1;
+	 link_read&lt;=0;
+	 sh8in_state&lt;=bit70;
+	 end
+bit70:
+    begin
+	if(scl)
+	begin
+	 sh8in_buf[7]&lt;=sda;
+	 sh8in_state&lt;=bit60;
+	end
+	else sh8in_state&lt;=bit70;
+	end
+bit60:
+    begin
+	if(scl)
+	begin
+	 sh8in_buf[6]&lt;=sda;
+	 sh8in_state&lt;=bit50;
+	end
+	else sh8in_state&lt;=bit60;
+	end
+bit50:
+    begin
+	if(scl)
+	begin
+	 sh8in_buf[5]&lt;=sda;
+	 sh8in_state&lt;=bit40;
+	end
+	else sh8in_state&lt;=bit50;
+	end
+bit40:
+    begin
+	if(scl)
+	begin
+	 sh8in_buf[4]&lt;=sda;
+	 sh8in_state&lt;=bit30;
+	end
+	else sh8in_state&lt;=bit40;
+	end
+bit30:
+    begin
+	if(scl)
+	begin
+	 sh8in_buf[3]&lt;=sda;
+	 sh8in_state&lt;=bit20;
+	end
+	else sh8in_state&lt;=bit30;
+	end
+bit20:
+    begin
+	if(scl)
+	begin
+	 sh8in_buf[2]&lt;=sda;
+	 sh8in_state&lt;=bit10;
+	end
+	else sh8in_state&lt;=bit20;
+	end
+bit10:
+    begin
+	if(scl)
+	begin
+	 sh8in_buf[1]&lt;=sda;
+	 sh8in_state&lt;=bit00;
+	end
+	else sh8in_state&lt;=bit10;
+	end
+bit00:
+    begin
+	if(scl)
+	begin
+	 sh8in_buf[0]&lt;=sda;
+	 sh8in_state&lt;=sh8in_end;
+	end
+	else sh8in_state&lt;=bit00;
+	end
+sh8in_end:
+    begin
+	link_sda&lt;=0;
+	 link_read&lt;=1;
+	FF&lt;=1;
+	sh8in_state&lt;=sh8in_begin;
+	end
+default:begin
+        link_read&lt;=0;
+		sh8in_state&lt;=sh8in_begin;
+        end
+endcase
+end
+endtask
+ 
+ 
+ 
+endmodule

@@ -1,0 +1,90 @@
+# Reading D:/SoftWare/Quartusii13.0/modelsim_ase/tcl/vsim/pref.tcl 
+# do musicplayer_1_run_msim_rtl_verilog.do 
+# if {[file exists rtl_work]} {
+# 	vdel -lib rtl_work -all
+# }
+# vlib rtl_work
+# vmap work rtl_work
+# Copying D:\SoftWare\Quartusii13.0\modelsim_ase\win32aloem/../modelsim.ini to modelsim.ini
+# Modifying modelsim.ini
+# ** Warning: Copied D:\SoftWare\Quartusii13.0\modelsim_ase\win32aloem/../modelsim.ini to modelsim.ini.
+#          Updated modelsim.ini.
+# 
+# vlog -vlog01compat -work work +incdir+C:/Users/asic/Desktop/Music {C:/Users/asic/Desktop/Music/reg_config.v}
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module reg_config
+# 
+# Top level modules:
+# 	reg_config
+# vlog -vlog01compat -work work +incdir+C:/Users/asic/Desktop/Music {C:/Users/asic/Desktop/Music/i2c_com.v}
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module i2c_com
+# 
+# Top level modules:
+# 	i2c_com
+# 
+# vlog -vlog01compat -work work +incdir+C:/Users/asic/Desktop/Music/simulation/modelsim {C:/Users/asic/Desktop/Music/simulation/modelsim/reg_config.vt}
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module reg_config_vlg_tst
+# 
+# Top level modules:
+# 	reg_config_vlg_tst
+# 
+# vsim -t 1ps -L altera_ver -L lpm_ver -L sgate_ver -L altera_mf_ver -L altera_lnsim_ver -L cycloneive_ver -L rtl_work -L work -voptargs="+acc"  reg_config_vlg_tst
+# vsim -L altera_ver -L lpm_ver -L sgate_ver -L altera_mf_ver -L altera_lnsim_ver -L cycloneive_ver -L rtl_work -L work -voptargs=\"+acc\" -t 1ps reg_config_vlg_tst 
+# Loading work.reg_config_vlg_tst
+# Loading work.reg_config
+# Loading work.i2c_com
+# 
+# add wave *
+# view structure
+# .main_pane.structure.interior.cs.body.struct
+# view signals
+# .main_pane.objects.interior.cs.body.tree
+# run -all
+add wave -position end  sim:/reg_config_vlg_tst/i1/u1/i2c_data
+add wave -position end  sim:/reg_config_vlg_tst/i1/u1/reset_n
+add wave -position end  sim:/reg_config_vlg_tst/i1/u1/clock_i2c
+add wave -position end  sim:/reg_config_vlg_tst/i1/u1/ack
+add wave -position end  sim:/reg_config_vlg_tst/i1/u1/start
+add wave -position end  sim:/reg_config_vlg_tst/i1/u1/tr_end
+add wave -position end  sim:/reg_config_vlg_tst/i1/u1/i2c_sclk
+add wave -position end  sim:/reg_config_vlg_tst/i1/u1/i2c_sdat
+add wave -position end  sim:/reg_config_vlg_tst/i1/u1/cyc_count
+add wave -position end  sim:/reg_config_vlg_tst/i1/u1/reg_sdat
+add wave -position end  sim:/reg_config_vlg_tst/i1/u1/sclk
+add wave -position end  sim:/reg_config_vlg_tst/i1/u1/ack1
+add wave -position end  sim:/reg_config_vlg_tst/i1/u1/ack2
+add wave -position end  sim:/reg_config_vlg_tst/i1/u1/ack3
+run
+restart
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run

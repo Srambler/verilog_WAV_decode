@@ -1,0 +1,5 @@
+
+State Machine - |sd_audio|sd_read:sd_read_inst|read_step
+Name read_step.01 
+read_step.00 0 
+read_step.01 1 
