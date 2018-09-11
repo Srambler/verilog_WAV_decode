@@ -9,4 +9,4 @@ SD_WM8731_Wav_Decod 文件夹实现verilog_WAV音频解码(WM8731芯片)
 
 如果需要改变FPGA的芯片，IP核要重新调用，或者自己写分频器。
 
-SD卡的读取是采样SPI协议
+SD卡的读取是采用SPI协议
